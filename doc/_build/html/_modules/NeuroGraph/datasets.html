@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NeuroGraph.datasets &mdash; NeuroGraph 2.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/documentation_options.js?v=20623aea"></script>
+        <script src="../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            NeuroGraph
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">NeuroGraph:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../NeuroGraph.html">Demographics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../NeuroGraph.html#mental-states">Mental States</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../NeuroGraph.html#cognitive-traits">Cognitive Traits</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Installations:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../install.html">Installation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">GET STARTED:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../get_started.html">Introduction by Example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../get_started.html#preprocessing-examples">Preprocessing Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../get_started.html#preprocessing-human-connectome-project-hcp1200-dataset">Preprocessing Human Connectome Project (HCP1200) Dataset</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Loading Benchmarks:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../datasets.html">Load Benchmark Datasets</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Preprocessing:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../preprocess.html">NeuroGraph Preprocessing Functionalities</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Utilities:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../utils.html">NeuroGraph Utilities</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">NeuroGraph</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">NeuroGraph.datasets</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for NeuroGraph.datasets</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">os.path</span> <span class="k">as</span> <span class="nn">osp</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+
+<span class="kn">from</span> <span class="nn">torch_geometric.data</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Data</span><span class="p">,</span>
+    <span class="n">InMemoryDataset</span><span class="p">,</span>
+    <span class="n">download_url</span><span class="p">,</span>
+    <span class="n">extract_zip</span>
+<span class="p">)</span>
+
+<div class="viewcode-block" id="NeuroGraphDataset">
+<a class="viewcode-back" href="../../datasets.html#NeuroGraph.datasets.NeuroGraphDataset">[docs]</a>
+<span class="k">class</span> <span class="nc">NeuroGraphDataset</span><span class="p">(</span><span class="n">InMemoryDataset</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;The NeuroGraph benchmark datasets from the</span>
+<span class="sd">    `&quot;NeuroGraph: Benchmarks for Graph Machine Learning in Brain Connectomics&quot;</span>
+<span class="sd">    &lt;https://arxiv.org/abs/2306.06202&gt;`_ paper.</span>
+<span class="sd">    :class:`NeuroGraphDataset` holds a collection of five neuroimaging graph</span>
+<span class="sd">    learning datasets that span multiple categories of demographics, mental</span>
+<span class="sd">    states, and cognitive traits.</span>
+<span class="sd">    See the `documentation</span>
+<span class="sd">    &lt;https://neurograph.readthedocs.io/en/latest/NeuroGraph.html&gt;`_ and the</span>
+<span class="sd">    `Github &lt;https://github.com/Anwar-Said/NeuroGraph&gt;`_ for more details.</span>
+
+<span class="sd">    +--------------------+---------+----------------------+</span>
+<span class="sd">    | Dataset            | #Graphs | Task                 |</span>
+<span class="sd">    +====================+=========+======================+</span>
+<span class="sd">    | :obj:`HCPTask`     | 7,443   | Graph Classification |</span>
+<span class="sd">    +--------------------+---------+----------------------+</span>
+<span class="sd">    | :obj:`HCPGender`   | 1,078   | Graph Classification |</span>
+<span class="sd">    +--------------------+---------+----------------------+</span>
+<span class="sd">    | :obj:`HCPAge`      | 1,065   | Graph Classification |</span>
+<span class="sd">    +--------------------+---------+----------------------+</span>
+<span class="sd">    | :obj:`HCPFI`       | 1,071   | Graph Regression     |</span>
+<span class="sd">    +--------------------+---------+----------------------+</span>
+<span class="sd">    | :obj:`HCPWM`       | 1,078   | Graph Regression     |</span>
+<span class="sd">    +--------------------+---------+----------------------+</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        root (str): Root directory where the dataset should be saved.</span>
+<span class="sd">        name (str): The name of the dataset (one of :obj:`&quot;HCPGender&quot;`,</span>
+<span class="sd">            :obj:`&quot;HCPTask&quot;`, :obj:`&quot;HCPAge&quot;`, :obj:`&quot;HCPFI&quot;`,</span>
+<span class="sd">            :obj:`&quot;HCPWM&quot;`).</span>
+<span class="sd">        transform (callable, optional): A function/transform that takes in an</span>
+<span class="sd">            :obj:`torch_geometric.data.Data` object and returns a transformed</span>
+<span class="sd">            version. The data object will be transformed before every access.</span>
+<span class="sd">            (default: :obj:`None`)</span>
+<span class="sd">        pre_transform (callable, optional): A function/transform that takes in</span>
+<span class="sd">            an :obj:`torch_geometric.data.Data` object and returns a</span>
+<span class="sd">            transformed version. The data object will be transformed before</span>
+<span class="sd">            being saved to disk. (default: :obj:`None`)</span>
+<span class="sd">        pre_filter (callable, optional): A function that takes in an</span>
+<span class="sd">            :obj:`torch_geometric.data.Data` object and returns a boolean</span>
+<span class="sd">            value, indicating whether the data object should be included in the</span>
+<span class="sd">            final dataset. (default: :obj:`None`)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="n">url</span> <span class="o">=</span> <span class="s1">&#39;https://vanderbilt.box.com/shared/static&#39;</span>
+    <span class="n">filenames</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;HCPGender&#39;</span><span class="p">:</span> <span class="s1">&#39;r6hlz2arm7yiy6v6981cv2nzq3b0meax.zip&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;HCPTask&#39;</span><span class="p">:</span> <span class="s1">&#39;8wzz4y17wpxg2stip7iybtmymnybwvma.zip&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;HCPAge&#39;</span><span class="p">:</span> <span class="s1">&#39;lzzks4472czy9f9vc8aikp7pdbknmtfe.zip&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;HCPWM&#39;</span><span class="p">:</span> <span class="s1">&#39;xtmpa6712fidi94x6kevpsddf9skuoxy.zip&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;HCPFI&#39;</span><span class="p">:</span> <span class="s1">&#39;g2md9h9snh7jh6eeay02k1kr9m4ido9f.zip&#39;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">root</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">pre_filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="k">assert</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">filenames</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">,</span> <span class="n">pre_filter</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">slices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_paths</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">raw_dir</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s1">&#39;raw&#39;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">raw_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s1">&#39;data.pt&#39;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">processed_dir</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s1">&#39;processed&#39;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">processed_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s1">&#39;data.pt&#39;</span>
+
+<div class="viewcode-block" id="NeuroGraphDataset.download">
+<a class="viewcode-back" href="../../datasets.html#NeuroGraph.datasets.NeuroGraphDataset.download">[docs]</a>
+    <span class="k">def</span> <span class="nf">download</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">filenames</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">download_url</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">)</span>
+        <span class="n">extract_zip</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span>
+            <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s1">&#39;processed&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">.pt&#39;</span><span class="p">),</span>
+            <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="s1">&#39;data.pt&#39;</span><span class="p">))</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="NeuroGraphDataset.process">
+<a class="viewcode-back" href="../../datasets.html#NeuroGraph.datasets.NeuroGraphDataset.process">[docs]</a>
+    <span class="k">def</span> <span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">data</span><span class="p">,</span> <span class="n">slices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_paths</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="n">num_samples</span> <span class="o">=</span> <span class="n">slices</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">data_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Data</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_samples</span><span class="p">):</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="n">slices</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">]:</span><span class="n">slices</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">][</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]]</span>
+            <span class="n">edge_index</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">edge_index</span><span class="p">[</span>
+                <span class="p">:,</span>
+                <span class="n">slices</span><span class="p">[</span><span class="s1">&#39;edge_index&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">]:</span><span class="n">slices</span><span class="p">[</span><span class="s1">&#39;edge_index&#39;</span><span class="p">][</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span>
+            <span class="p">]</span>
+            <span class="n">sample</span> <span class="o">=</span> <span class="n">Data</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">edge_index</span><span class="o">=</span><span class="n">edge_index</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">y</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pre_filter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">pre_filter</span><span class="p">(</span><span class="n">sample</span><span class="p">):</span>
+                <span class="k">continue</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pre_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">sample</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pre_transform</span><span class="p">(</span><span class="n">sample</span><span class="p">)</span>
+
+            <span class="n">data_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sample</span><span class="p">)</span>
+        <span class="n">data</span><span class="p">,</span> <span class="n">slices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">collate</span><span class="p">(</span><span class="n">data_list</span><span class="p">)</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">save</span><span class="p">((</span><span class="n">data</span><span class="p">,</span><span class="n">slices</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">processed_paths</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span></div>
+</div>
+
+
+<div class="viewcode-block" id="NeuroGraphDynamic">
+<a class="viewcode-back" href="../../datasets.html#NeuroGraph.datasets.NeuroGraphDynamic">[docs]</a>
+<span class="k">class</span> <span class="nc">NeuroGraphDynamic</span><span class="p">():</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Graph-based neuroimaging benchmark datasets, e.g.,</span>
+<span class="sd">        :obj:`&quot;DynHCPGender&quot;`, :obj:`&quot;DynHCPAge&quot;`, :obj:`&quot;DynHCPActivity&quot;`,</span>
+<span class="sd">        :obj:`&quot;DynHCPWM&quot;`, or :obj:`&quot;DynHCPFI&quot;`</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            root (str): Root directory where the dataset should be saved.</span>
+<span class="sd">            name (str): The name of the dataset.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            list: A list of graphs in PyTorch Geometric (pyg) format. Each graph contains a list of dynamic graphs batched in pyg batch.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="s1">&#39;https://vanderbilt.box.com/shared/static&#39;</span>
+    <span class="n">filenames</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;DynHCPGender&#39;</span><span class="p">:</span> <span class="s1">&#39;mj0z6unea34lfz1hkdwsinj7g22yohxn.zip&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;DynHCPActivity&#39;</span><span class="p">:</span> <span class="s1">&#39;2so3fnfqakeu6hktz322o3nm2c8ocus7.zip&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;DynHCPAge&#39;</span><span class="p">:</span> <span class="s1">&#39;195f9teg4t4apn6kl6hbc4ib4g9addtq.zip&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;DynHCPWM&#39;</span><span class="p">:</span> <span class="s1">&#39;mxy8fq3ghm60q6h7uhnu80pgvfxs6xo2.zip&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;DynHCPFI&#39;</span><span class="p">:</span> <span class="s1">&#39;un7w3ohb2mmyjqt1ou2wm3g87y1lfuuo.zip&#39;</span><span class="p">,</span>
+        <span class="p">}</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">root</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">=</span> <span class="n">root</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="k">assert</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">filenames</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="n">file_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span><span class="s1">&#39;processed&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">+</span><span class="s2">&quot;.pt&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">file_path</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">download</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_data</span><span class="p">()</span>
+    
+<div class="viewcode-block" id="NeuroGraphDynamic.download">
+<a class="viewcode-back" href="../../datasets.html#NeuroGraph.datasets.NeuroGraphDynamic.download">[docs]</a>
+    <span class="k">def</span> <span class="nf">download</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">filenames</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">download_url</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+        <span class="n">extract_zip</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">path</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="NeuroGraphDynamic.load_data">
+<a class="viewcode-back" href="../../datasets.html#NeuroGraph.datasets.NeuroGraphDynamic.load_data">[docs]</a>
+    <span class="k">def</span> <span class="nf">load_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">==</span><span class="s1">&#39;DynHCPActivity&#39;</span><span class="p">:</span>
+            <span class="n">dataset_raw</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span><span class="s1">&#39;processed&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">+</span><span class="s2">&quot;.pt&quot;</span><span class="p">))</span>
+            <span class="n">dataset</span><span class="p">,</span><span class="n">labels</span> <span class="o">=</span> <span class="p">[],[]</span>
+            <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">dataset_raw</span><span class="p">:</span>
+                <span class="n">batches</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;batches&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">batches</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">batches</span><span class="p">:</span>
+                        <span class="n">y</span> <span class="o">=</span> <span class="n">b</span><span class="o">.</span><span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+                        <span class="n">dataset</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+                        <span class="n">labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">dataset</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span><span class="s1">&#39;processed&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">+</span><span class="s2">&quot;.pt&quot;</span><span class="p">))</span>
+            <span class="n">labels</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[</span><span class="s1">&#39;labels&#39;</span><span class="p">]</span>
+            <span class="n">dataset</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[</span><span class="s1">&#39;batches&#39;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">dataset</span><span class="p">,</span><span class="n">labels</span></div>
+</div>
+
+    
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Anwar Said.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
